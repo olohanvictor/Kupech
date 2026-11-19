@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id         Int         @id @default(autoincrement())
+  nome       String
+  email      String      @unique
+  senha      String
+  acessos    Acesso[]
+  simulacoes Simulacao[]
+}
+
+// registro de acessos (RNF04)
+model Acesso {
+  id        Int      @id @default(autoincrement())
+  em        DateTime @default(now())
+  usuarioId Int
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+}
+
+// Parâmetros/Valores: alíquotas e taxas cadastradas para agilizar o preenchimento (o usuário pode alterar tudo na simulação)
+model AliquotaNcm {
+  ncm       String  @id
+  ii        Float
+  ipi       Float
+  pis       Float
+  cofins    Float
+  exigeLpco Boolean @default(false)
+  lpco      Float?
+}
+
+model AliquotaUf {
+  uf    String @id
+  icms  Float
+}
+
+// Taxas portuárias e governamentais com nome. "campo" diz em qual campo da simulação ela pode ser usada
+model Taxa {
+  id    Int    @id @default(autoincrement())
+  nome  String
+  campo String
+  valor Float
+}
+
+// Câmbio por moeda (R$ por unidade)
+model Cambio {
+  moeda String @id
+  valor Float
+}
+
+model Categoria {
+  id   Int    @id @default(autoincrement())
+  nome String @unique
+}
+
+// dados = tudo o que foi informado (inclui alíquotas e câmbio usados); resultado = cálculo do momento em que foi salvo
+model Simulacao {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  criadaEm  DateTime @default(now())
+  dados     Json
+  resultado Json
+  usuarioId Int
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+}
